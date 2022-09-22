@@ -267,6 +267,7 @@ class Getspecificquater(APIView):
                     return Response({"status":False,"message":"Data not found"})
     
 class questions(APIView):
+### QUESTION ADD API
     def post(self, request):
         requireFields = ['question','type','questiontype']
         validator = uc.keyValidation(True,True,request.data,requireFields)
@@ -287,4 +288,59 @@ class questions(APIView):
                 return Response({"status":True,"message":"Quater Successfully Created"})
             else:
                 return Response ({"status":False,"message":"Unauthenticated"})
-    
+
+### QUESTION GET API
+
+    def get (self,request):
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+            data = Question.objects.all().values('uid','question','type','questiontype').order_by('-uid')
+            
+            return Response({"status":True,"data":data},200)
+        else:
+            return Response({"status":False,"message":'Unauthenticated'}),
+
+### QUESTIO UPDATE API
+
+    def put (self,request):
+        requireFields = ['uid','question','type','questiontype']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.data.get('uid')
+
+                checkquestion = Question.objects.filter(uid = uid).first()
+                if checkquestion:
+                    checkquestion.question = request.data.get('question') 
+                    checkquestion.type = request.data.get('type') 
+                    checkquestion.questiontype = request.data.get('questiontype')
+
+                    checkquestion.save()
+                    return Response({"status":True,"message":"Question Updated Successfully"})
+                else:
+                    return Response({"status":True,"message":"Data not found"})
+            else:
+                return Response({"status":True,"message":"Unauthenticated"})
+
+    def delete (self,request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+                data = Question.objects.filter(uid=uid).first()
+                if data:
+                    data.delete()
+                    return Response({"status":True,"message":"Question Deleted Successfully"})
+                else:
+                    return Response({"status":False,"message":"Data not Found"})
+            else:
+                return Response({"status":False,"message":"Unauthenticated"})
