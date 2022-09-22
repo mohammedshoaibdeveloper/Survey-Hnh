@@ -10,8 +10,13 @@ import jwt
 import datetime
 from decouple import config
 from django.db.models import F
+import pandas as pd
+import csv
 
 # Create your views here
+
+# ## ADMIN LOGIN API
+
 class admin_login(APIView):
      def post(self,request):
         requireFields = ['email','password']
@@ -49,7 +54,8 @@ class admin_login(APIView):
             else:
                 return Response ({"status":False,"message":"Account doesnot access"},200)
 
-                    # employee login
+# ## EMPLOYEE LOGIN API
+
 class employee_login(APIView):
     def post(self,request):
         requireFields = ['email','password']
@@ -100,3 +106,185 @@ class encryptpass(APIView):
             
             message = {'status':'Error','message':str(e)}
             return Response(message)
+
+# ## EMPLOYEE COUNT API
+
+class employeeCount(APIView):
+    def get(self,request):
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+                data = Account.objects.filter(role='employee').values('uid','name','email','contactno','designation','stack','role').count()
+            
+                return Response({"status":True,"data":data},200)
+        else:
+            return Response({"status":False,"message":'Unauthenticated'}),
+
+
+
+# class uploadcsv(APIView):
+
+#     def post (self,request): 
+#             file = request.FILES.get("file")
+#             if not file:
+#                 return Response({'status':'warning','message':'File is required'})
+            
+#             if not file.name.endswith('csv'):
+#                 return Response({'status':False,'message':"Your File Format is Incorrect"})
+
+#             columnFormat = ['name','email','contactno','designation','stack','role']
+#             convertDataFrame = pd.read_csv(file)
+#             convertDataFrame = pd.DataFrame(convertDataFrame)
+#             ###remove duplicate from upload file
+#             bool_series = convertDataFrame["Model"].duplicated(keep = 'first')
+#             convertDataFrame = convertDataFrame[~bool_series]# passing NOT of bool series to see unique values only
+
+#             convertDataFrame.columns = [x.lower() for x in convertDataFrame.columns]
+#             dataColumns = convertDataFrame.columns
+#             if list(dataColumns) == columnFormat:
+#                 name = convertDataFrame[columnFormat[0]]
+#                 email = convertDataFrame[columnFormat[1]]
+#                 contactno = convertDataFrame[columnFormat[2]]
+#                 designation = convertDataFrame[columnFormat[3]]
+#                 stack = convertDataFrame[columnFormat[4]]
+#                 role= convertDataFrame[columnFormat[5]]
+
+#                 bulklist = list()
+#                 # for a,b,c,d,e,f,g,h,i in zip(name,email,contactno,designation,stack,role,):
+#                 bulklist.append(Account(name=a,email=b,contactno=c,designation=d,stack=e,role=f))
+#                 for a,b,c,d,e,f in zip(name,email,contactno,designation,stack,role):
+#                     Account.objects.filter(Model=d).delete()  ###delete duplicate from database         
+#                     bulklist.append(Account(name=a,email=b,contactno=c,designation=d,stack=e,role=f))
+            
+#                 Account.objects.bulk_create(bulklist)
+#                 return Response({'status':True,'message':"Data Uploaded Successfully"})
+
+
+#             else:
+#                 return Response({'status':False,'message':"Your File Column Format is Incorrect"},)
+
+class quaters(APIView):
+
+# ## QUATER ADD API
+    
+    def post (self, request):
+        requireFields = ['start_date','end_date','time']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                start_date = request.data.get ('start_date')
+                end_date = request.data.get ('end_date')
+                time = request.data.get ('time')
+
+                data = Quater(start_date = start_date, end_date = end_date, time= time)
+                data.save()
+
+                return Response({"status":True,"message":"Quater Successfully Created"})
+            else:
+                return Response ({"status":False,"message":"Unauthenticated"})
+
+# ## QUATER GET API
+
+    def get (self, request):
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+            data = Quater.objects.all().values('uid','start_date','end_date','time').order_by('-uid')
+            
+            return Response({"status":True,"data":data},200)
+        else:
+            return Response({"status":False,"message":'Unauthenticated'}),
+
+# ## QUATER UPDATE API
+
+    def put (self,request):
+        requireFields = ['uid','start_date','end_date','time']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.data.get('uid')
+
+                checkquater = Quater.objects.filter(uid = uid).first()
+                if checkquater:
+                    checkquater.start_date = request.data.get('start_date') 
+                    checkquater.end_date = request.data.get('end_date') 
+                    checkquater.time = request.data.get('time')
+
+                    checkquater.save()
+                    return Response({"status":True,"message":"Quater Updated Successfully"})
+                else:
+                    return Response({"status":True,"message":"Data not found"})
+            else:
+                return Response({"status":True,"message":"Unauthenticated"})
+
+# ## QUATER DELETE API
+
+    def delete(self,request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+                data = Quater.objects.filter(uid=uid).first()
+                if data:
+                    data.delete()
+                    return Response({"status":True,"message":"Account Deleted Successfully"})
+                else:
+                    return Response({"status":False,"message":"Account not Found"})
+            else:
+                return Response({"status":False,"message":"Unauthenticated"})
+
+# ## QUATER GETSPECIFIC API
+
+class Getspecificquater(APIView):
+    def get (self,request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+
+                data = Quater.objects.filter(uid = uid).values('uid','uid','start_date','end_date','time').first()
+                if data:
+                    return Response({"status":True,"data":data})
+                else:
+                    return Response({"status":False,"message":"Data not found"})
+    
+class questions(APIView):
+    def post(self, request):
+        requireFields = ['question','type','questiontype']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                question = request.data.get ('question')
+                type = request.data.get ('type')
+                questiontype = request.data.get ('questiontype')
+
+                data = Question(question = question, type = type, questiontype= questiontype)
+                data.save()
+
+                return Response({"status":True,"message":"Quater Successfully Created"})
+            else:
+                return Response ({"status":False,"message":"Unauthenticated"})
+    
