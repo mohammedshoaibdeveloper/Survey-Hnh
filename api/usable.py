@@ -40,7 +40,7 @@ def employeetokenauth(token):
 
     try:
        
-        my_token = jwt.decode(token,config('businesskey'), algorithms=["HS256"])
+        my_token = jwt.decode(token,config('employeekey'), algorithms=["HS256"])
         return my_token
 
     except jwt.ExpiredSignatureError:

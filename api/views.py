@@ -65,35 +65,34 @@ class employee_login(APIView):
             return Response(validator,status = 200)
         
         else:
-            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
-            if my_token:
-                email = request.data.get('email')
-                password = request.data.get('password')
+    
+            email = request.data.get('email')
+            password = request.data.get('password')
 
-                fetchAccount = Account.objects.filter(email=email).first()
-                if fetchAccount:
-                    if handler.verify(password,fetchAccount.password):
-                        if fetchAccount.role == "employee":
-                            access_token_payload = {
-                                            'id': str(fetchAccount.uid),
-                                            'name':fetchAccount.name, 
-                                            'email':fetchAccount.email, 
-                                            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=22),
-                                            'iat': datetime.datetime.utcnow(),
+            fetchAccount = Account.objects.filter(email=email).first()
+            if fetchAccount:
+                if handler.verify(password,fetchAccount.password):
+                    if fetchAccount.role == "employee":
+                        access_token_payload = {
+                                        'id': str(fetchAccount.uid),
+                                        'name':fetchAccount.name, 
+                                        'email':fetchAccount.email, 
+                                        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=22),
+                                        'iat': datetime.datetime.utcnow(),
 
-                                    }
+                                }
 
-                            access_token = jwt.encode(access_token_payload,config('adminkey'),algorithm = 'HS256')
-                            data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
-                            
-                            return Response({"status":True,"message":"Login Successlly","token":access_token,"admindata":data},200)
+                        access_token = jwt.encode(access_token_payload,config('employeekey'),algorithm = 'HS256')
+                        data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
+                        
+                        return Response({"status":True,"message":"Login Successlly","token":access_token,"employeedata":data},200)
 
-                        else:
-                            return Response({"status":False,"message":"You are not login"})
                     else:
-                        return Response ({"status":False,"message":"Invalid crediatials"},200)
+                        return Response({"status":False,"message":"You are not login"})
                 else:
-                    return Response ({"status":False,"message":"Account doesnot access"},200)
+                    return Response ({"status":False,"message":"Invalid crediatials"},200)
+            else:
+                return Response ({"status":False,"message":"Account doesnot access"},200)
 class encryptpass(APIView):
     def post(self,request):
         try:    
@@ -265,7 +264,6 @@ class Getspecificquater(APIView):
                     return Response({"status":True,"data":data})
                 else:
                     return Response({"status":False,"message":"Data not found"})
-    
 class questions(APIView):
 ### QUESTION ADD API
     def post(self, request):
@@ -326,6 +324,8 @@ class questions(APIView):
             else:
                 return Response({"status":True,"message":"Unauthenticated"})
 
+### QUESTIO DELETE API
+
     def delete (self,request):
         requireFields = ['uid']
         validator = uc.keyValidation(True,True,request.GET,requireFields)
@@ -344,3 +344,56 @@ class questions(APIView):
                     return Response({"status":False,"message":"Data not Found"})
             else:
                 return Response({"status":False,"message":"Unauthenticated"})
+
+
+class answers(APIView):
+    def post (self,request):
+        requireFields = ['answer','Qid']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+
+        else:
+            my_token = uc.employeetokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                answer = request.data.get ('answer')
+                Qid = request.data.get ('Qid')
+
+                getQid = Question.objects.filter(uid = Qid).first()
+                
+                data = Answer(answer = answer ,Qid = getQid)
+                data.save()
+                return Response({"status":True,"messsage":"Answer Can be successsfuuly added"})
+    
+    def get (self,request):
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+            data = Answer.objects.all().values('uid','answer','Qid').order_by('-uid')
+            
+            return Response({"status":True,"data":data},200)
+        else:
+            return Response({"status":False,"message":'Unauthenticated'}),
+
+    def put (self, request):
+        requireFields = ['uid','answer']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.employeetokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.data.get('uid')
+                answer = request.data.get('answer')
+
+                checkanswer = Answer.objects.filter(uid = uid).first()
+                if checkanswer:
+                    checkanswer.answer = request.data.get('answer') 
+
+                    checkanswer.save()
+                    return Response({"status":True,"message":"Question Updated Successfully"})
+                else:
+                    return Response({"status":True,"message":"Data not found"})
+            else:
+                return Response({"status":True,"message":"Unauthenticated"})

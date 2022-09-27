@@ -13,4 +13,5 @@ path('employeeCount',employeeCount.as_view()),
 path('quaters',quaters.as_view()),
 path('Getspecificquater',Getspecificquater.as_view()),
 path('questions',questions.as_view()),
+path('answers',answers.as_view()),
 ]
