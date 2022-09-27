@@ -99,10 +99,52 @@ class employee_login(APIView):
                 return Response ({"status":False,"message":"Account doesnot access"},200)
 
 class EmployeeUpdate(APIView):
-   
+    def post (self, request):
+        requireFields = ['name','email','password','contactno','designation','stack','role']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                name = request.data.get('name')
+                email = request.data.get ('email')
+                password = request.data.get ('password')
+                contactno = request.data.get ('contactno')
+                designation = request.data.get ('designation')
+                stack = request.data.get ('stack')
+                role = request.data.get ('role')
+
+                if uc.checkemailforamt(email):
+                    if not uc.passwordLengthValidator(password):
+                        
+                        return Response({"status":False,"message":"Password should not be less than 8 or greater than 20"})
+
+
+                    checkemail = Account.objects.filter(email = email).first()
+                    if checkemail:
+                        return Response({"status":False,"message":"Email alreay exist"},409)
+                    
+                    data = Account(name= name,email = email,password = handler.hash(password),contactno= contactno,designation=designation,stack = stack ,role= role) 
+                    data.save()
+
+                    return Response({"status":True,"message":"Account Created Successfuly"},201)
+
+
+                else:
+                    return Response({"status":False,"message":"Email format is incorrect"},422)
+            
+            else:
+                return Response({"status":False,"message":"Unauthorized"},status=401)
+                    
+
+                
+               
 #DELETE EMPLOYEE ACCOUNT DATA
           
-    def delete (self, request):
+    def delete(self, request):
         my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
         if my_token:
             uid = request.GET['uid']
