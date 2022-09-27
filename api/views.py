@@ -1,3 +1,5 @@
+import email
+from inspect import stack
 from ntpath import join
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -44,6 +46,7 @@ class admin_login(APIView):
 
                         access_token = jwt.encode(access_token_payload,config('adminkey'),algorithm = 'HS256')
                         data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
+                        JoinQuater(Accountid = fetchAccount).save()
                         
                         return Response({"status":True,"message":"Login Successlly","token":access_token,"admindata":data},200)
 
@@ -84,6 +87,7 @@ class employee_login(APIView):
 
                         access_token = jwt.encode(access_token_payload,config('employeekey'),algorithm = 'HS256')
                         data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
+                        JoinQuater(Accountid = fetchAccount).save()
                         
                         return Response({"status":True,"message":"Login Successlly","token":access_token,"employeedata":data},200)
 
@@ -93,6 +97,83 @@ class employee_login(APIView):
                     return Response ({"status":False,"message":"Invalid crediatials"},200)
             else:
                 return Response ({"status":False,"message":"Account doesnot access"},200)
+
+class EmployeeUpdate(APIView):
+    def put (self,request):
+        requireFields = ['uid','name','contactno','designation','stack']
+        validator = uc.keyValidation(True,True,request.data,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else: 
+
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+
+                uid = request.data.get('uid')
+                role = request.data.get ('role')
+                if role == 'employee':
+                    checkaccount = Account.objects.filter(uid = uid).first()
+                    if checkaccount:
+                        checkaccount.name = request.data.get('name') 
+                        checkaccount.contactno = request.data.get('contactno') 
+                        checkaccount.designation = request.data.get('designation')
+                        checkaccount.stack = request.data.get('stack')
+                        checkaccount.save()
+                        return Response({"status":True,"message":"Account Updated Successfully"})
+                    else:
+                        return Response ({"status":False,"message":"Account not found"})
+                else:
+                    return Response ({"status":False,"message":"Please Enter a correct account"})
+            else:
+                return Response ({"status":False,"message":"Unauthenticated"})
+
+#DELETE EMPLOYEE ACCOUNT DATA
+          
+    def delete (self, request):
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+            uid = request.GET['uid']
+            data = Account.objects.filter(uid=uid).first()
+            if data:
+                data.delete()
+                return Response({"status":True,"message":"Employee Account Deleted Successfully"})
+            else:
+                return Response({"status":False,"message":"Employee Account not Found"})
+        else:
+            return Response({"status":False,"message":"Unauthenticated"})
+
+# GET EMPLOYEE ACCOUNT DATA
+    
+    def get (self,request): 
+        my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+        if my_token:
+            data = Account.objects.filter(role="employee").values('uid','name','contactno','email','designation','stack','role').order_by('-uid')
+            return Response({"status":True,"data":data})
+        else:
+            return Response({"status":False,"message":"Unauthenticated"})
+
+# GETSPECIFIC EMPLOYEE ACCOUNT DATA
+
+class Getspecificemployeeaccount(APIView):
+    def get(self, request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+
+                data = Account.objects.filter(uid = uid).values('uid','name','contactno','email','designation','stack').first()
+                if data:
+                    return Response({"status":True,"data":data})
+                else:
+                    return Response({"status":False,"message":"Data not found"})
 class encryptpass(APIView):
     def post(self,request):
         try:    
@@ -180,6 +261,7 @@ class quaters(APIView):
                 time = request.data.get ('time')
 
                 data = Quater(start_date = start_date, end_date = end_date, time= time)
+
                 data.save()
 
                 return Response({"status":True,"message":"Quater Successfully Created"})
@@ -298,7 +380,7 @@ class questions(APIView):
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
 
-### QUESTIO UPDATE API
+### QUESTION UPDATE API
 
     def put (self,request):
         requireFields = ['uid','question','type','questiontype']
@@ -324,7 +406,7 @@ class questions(APIView):
             else:
                 return Response({"status":True,"message":"Unauthenticated"})
 
-### QUESTIO DELETE API
+### QUESTION DELETE API
 
     def delete (self,request):
         requireFields = ['uid']
@@ -347,6 +429,8 @@ class questions(APIView):
 
 
 class answers(APIView):
+### ANSWER ADD API
+
     def post (self,request):
         requireFields = ['answer','Qid']
         validator = uc.keyValidation(True,True,request.data,requireFields)
@@ -363,8 +447,11 @@ class answers(APIView):
                 getQid = Question.objects.filter(uid = Qid).first()
                 
                 data = Answer(answer = answer ,Qid = getQid)
+                # JoinQuater(Quaterid = Quater)
                 data.save()
                 return Response({"status":True,"messsage":"Answer Can be successsfuuly added"})
+
+### ANSWER GET API
     
     def get (self,request):
         my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
@@ -374,6 +461,8 @@ class answers(APIView):
             return Response({"status":True,"data":data},200)
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
+
+### ANSWER UPDATE API
 
     def put (self, request):
         requireFields = ['uid','answer']
@@ -397,3 +486,50 @@ class answers(APIView):
                     return Response({"status":True,"message":"Data not found"})
             else:
                 return Response({"status":True,"message":"Unauthenticated"})
+
+### ANSWER  DELETE API
+
+    def delete (self, request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        else:
+            my_token = uc.employeetokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+                data = Answer.objects.filter(uid=uid).first()
+                if data:
+                    data.delete()
+                    return Response({"status":True,"message":"Answer  Deleted Successfully"})
+                else:
+                    return Response({"status":False,"message":"Answer not Found"})
+            else:
+                return Response({"status":False,"message":"Unauthenticated"})
+
+### ANSWER  GETSPECIFIC API
+
+class Getspecificanswer (APIView):
+    def get(self, request):
+        requireFields = ['uid']
+        validator = uc.keyValidation(True,True,request.GET,requireFields)
+        
+        if validator:
+            return Response(validator,status = 200)
+        
+        else:
+            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+            if my_token:
+                uid = request.GET['uid']
+
+                data = Answer.objects.filter(uid = uid).values('uid','answer','Qid').first()
+                if data:
+                    return Response({"status":True,"data":data})
+                else:
+                    return Response({"status":False,"message":"Data not found"})
+                
+    
+# class joinquaters(APIView):
+#     def get (self,request):
+        
