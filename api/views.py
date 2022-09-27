@@ -99,36 +99,7 @@ class employee_login(APIView):
                 return Response ({"status":False,"message":"Account doesnot access"},200)
 
 class EmployeeUpdate(APIView):
-    def put (self,request):
-        requireFields = ['uid','name','contactno','designation','stack']
-        validator = uc.keyValidation(True,True,request.data,requireFields)
-        
-        if validator:
-            return Response(validator,status = 200)
-        
-        else: 
-
-            my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
-            if my_token:
-
-                uid = request.data.get('uid')
-                role = request.data.get ('role')
-                if role == 'employee':
-                    checkaccount = Account.objects.filter(uid = uid).first()
-                    if checkaccount:
-                        checkaccount.name = request.data.get('name') 
-                        checkaccount.contactno = request.data.get('contactno') 
-                        checkaccount.designation = request.data.get('designation')
-                        checkaccount.stack = request.data.get('stack')
-                        checkaccount.save()
-                        return Response({"status":True,"message":"Account Updated Successfully"})
-                    else:
-                        return Response ({"status":False,"message":"Account not found"})
-                else:
-                    return Response ({"status":False,"message":"Please Enter a correct account"})
-            else:
-                return Response ({"status":False,"message":"Unauthenticated"})
-
+   
 #DELETE EMPLOYEE ACCOUNT DATA
           
     def delete (self, request):
