@@ -125,19 +125,19 @@ class EmployeeAdd(APIView):
 
                     checkemail = Account.objects.filter(email = email).first()
                     if checkemail:
-                        return Response({"status":False,"message":"Email alreay exist"},409)
+                        return Response({"status":False,"message":"Email alreay exist"})
                     
                     data = Account(name= name,email = email,password = handler.hash(password),contactno= contactno,designation=designation,stack = stack ,role= role) 
                     data.save()
 
-                    return Response({"status":True,"message":"Account Created Successfuly"},201)
+                    return Response({"status":True,"message":"Account Created Successfuly"})
 
 
                 else:
-                    return Response({"status":False,"message":"Email format is incorrect"},422)
+                    return Response({"status":False,"message":"Email format is incorrect"})
             
             else:
-                return Response({"status":False,"message":"Unauthorized"},status=401)
+                return Response({"status":False,"message":"Unauthorized"})
                     
 ### EMPLOYEE UPDATE API 
     def put (self,request):
