@@ -222,18 +222,7 @@ class Getspecificemployeeaccount(APIView):
                     return Response({"status":True,"data":data})
                 else:
                     return Response({"status":False,"message":"Data not found"})
-class encryptpass(APIView):
-    def post(self,request):
-        try:    
-            passw = handler.hash(request.data.get('passw'))
-
-
-            return HttpResponse(passw)
-
-        except Exception as e:
-            
-            message = {'status':'Error','message':str(e)}
-            return Response(message)
+                
 
 # ## EMPLOYEE COUNT API
 
@@ -394,6 +383,7 @@ class Getspecificquater(APIView):
                     return Response({"status":True,"data":data})
                 else:
                     return Response({"status":False,"message":"Data not found"})
+
 class questions(APIView):
 ### QUESTION ADD API
     def post(self, request):
