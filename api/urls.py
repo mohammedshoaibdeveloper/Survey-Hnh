@@ -15,6 +15,6 @@ path('Getspecificquater',Getspecificquater.as_view()),
 path('questions',questions.as_view()),
 path('answers',answers.as_view()),
 path('Getspecificanswer',Getspecificanswer.as_view()),
-path('EmployeeUpdate',EmployeeUpdate.as_view()),
+path('EmployeeAdd',EmployeeAdd.as_view()),
 path('Getspecificemployeeaccount',Getspecificemployeeaccount.as_view()),
 ]

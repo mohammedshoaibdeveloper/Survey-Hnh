@@ -98,7 +98,7 @@ class employee_login(APIView):
             else:
                 return Response ({"status":False,"message":"Account doesnot access"},200)
 
-class EmployeeUpdate(APIView):
+class EmployeeAdd(APIView):
     def post (self, request):
         requireFields = ['name','email','password','contactno','designation','stack','role']
         validator = uc.keyValidation(True,True,request.data,requireFields)
@@ -139,8 +139,43 @@ class EmployeeUpdate(APIView):
             else:
                 return Response({"status":False,"message":"Unauthorized"},status=401)
                     
+### EMPLOYEE UPDATE API 
+    def put (self,request):
+            requireFields = ['uid','name','email','password','contactno','designation','stack']
+            validator = uc.keyValidation(True,True,request.data,requireFields)
+            
+            if validator:
+                return Response(validator,status = 200)
+            
+            else: 
+                my_token = uc.admintokenauth(request.META['HTTP_AUTHORIZATION'][7:])
+                if my_token:
+                    uid = request.data.get('uid')
+                    name = request.data.get('name')
+                    email = request.data.get('email')
+                    password = request.data.get('password')
+                    contactno = request.data.get('contactno')
+                    designation = request.data.get('designation')
+                    stack = request.data.get('stack')
 
-                
+                    checkaccount = Account.objects.filter(uid = uid).first()
+                    if checkaccount:
+                        checkaccount.name = name
+                        checkaccount.email = email
+                        checkaccount.password = password
+                        checkaccount.contactno = contactno
+                        checkaccount.designation = designation
+                        checkaccount.stack = stack
+
+                        if password  !="nochange":
+                            if not uc.passwordLengthValidator(password):
+                                return Response({"status":False,"message":"Password should not be less than 8 or greater than 20"})
+                            checkaccount.password = handler.hash(password)
+                            checkaccount.save() 
+                            return Response({"status":True,"message":"Updated Successfully"})
+                        else:
+                            ({"status":False,"message":"Data not found"})
+            
                
 #DELETE EMPLOYEE ACCOUNT DATA
           
