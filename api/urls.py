@@ -7,7 +7,6 @@ urlpatterns = [
 path('',admin_login.as_view()),
 path('admin_login',admin_login.as_view()),
 path('employee_login',employee_login.as_view()),
-path('encryptpass',encryptpass.as_view()),
 path('employeeCount',employeeCount.as_view()),
 # path('uploadcsv',uploadcsv.as_view()),
 path('quaters',quaters.as_view()),
