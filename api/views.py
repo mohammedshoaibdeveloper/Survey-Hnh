@@ -100,7 +100,7 @@ class employee_login(APIView):
 
 class EmployeeAdd(APIView):
     def post (self, request):
-        requireFields = ['name','email','password','contactno','designation','stack','role']
+        requireFields = ['name','email','password','contactno','designation','stack']
         validator = uc.keyValidation(True,True,request.data,requireFields)
         
         if validator:
@@ -115,7 +115,7 @@ class EmployeeAdd(APIView):
                 contactno = request.data.get ('contactno')
                 designation = request.data.get ('designation')
                 stack = request.data.get ('stack')
-                role = request.data.get ('role')
+                # role = employee
 
                 if uc.checkemailforamt(email):
                     if not uc.passwordLengthValidator(password):
@@ -127,7 +127,7 @@ class EmployeeAdd(APIView):
                     if checkemail:
                         return Response({"status":False,"message":"Email alreay exist"})
                     
-                    data = Account(name= name,email = email,password = handler.hash(password),contactno= contactno,designation=designation,stack = stack ,role= role) 
+                    data = Account(name= name,email = email,password = handler.hash(password),contactno= contactno,designation=designation,stack = stack ,role= 'employee') 
                     data.save()
 
                     return Response({"status":True,"message":"Account Created Successfuly"})
@@ -141,7 +141,7 @@ class EmployeeAdd(APIView):
                     
 ### EMPLOYEE UPDATE API 
     def put (self,request):
-            requireFields = ['uid','name','email','password','contactno','designation','stack']
+            requireFields = ['uid','name','email','contactno','designation','stack']
             validator = uc.keyValidation(True,True,request.data,requireFields)
             
             if validator:
@@ -153,7 +153,6 @@ class EmployeeAdd(APIView):
                     uid = request.data.get('uid')
                     name = request.data.get('name')
                     email = request.data.get('email')
-                    password = request.data.get('password')
                     contactno = request.data.get('contactno')
                     designation = request.data.get('designation')
                     stack = request.data.get('stack')
@@ -162,20 +161,17 @@ class EmployeeAdd(APIView):
                     if checkaccount:
                         checkaccount.name = name
                         checkaccount.email = email
-                        checkaccount.password = password
                         checkaccount.contactno = contactno
                         checkaccount.designation = designation
                         checkaccount.stack = stack
 
-                        if password  !="nochange":
-                            if not uc.passwordLengthValidator(password):
-                                return Response({"status":False,"message":"Password should not be less than 8 or greater than 20"})
-                            checkaccount.password = handler.hash(password)
+                        if uc.checkemailforamt(email):
+                            checkemail = Account.objects.filter(email = email).first()
+                            if checkemail:
+                                return Response({"status":False,"message":"Email alreay exist"})
                             checkaccount.save() 
                             return Response({"status":True,"message":"Updated Successfully"})
-                        else:
-                            ({"status":False,"message":"Data not found"})
-            
+                        
                
 #DELETE EMPLOYEE ACCOUNT DATA
           
@@ -485,7 +481,7 @@ class answers(APIView):
                 getQid = Question.objects.filter(uid = Qid).first()
                 
                 data = Answer(answer = answer ,Qid = getQid)
-                # JoinQuater(Quaterid = Quater)
+                JoinQuater(Quaterid = getQid)
                 data.save()
                 return Response({"status":True,"messsage":"Answer Can be successsfuuly added"})
 
