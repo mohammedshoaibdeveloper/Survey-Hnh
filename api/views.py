@@ -48,14 +48,14 @@ class admin_login(APIView):
                         data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
                         JoinQuater(Accountid = fetchAccount).save()
                         
-                        return Response({"status":True,"message":"Login Successlly","token":access_token,"admindata":data},200)
+                        return Response({"status":True,"message":"Login Successlly","token":access_token,"admindata":data})
 
                     else:
                         return Response({"status":False,"message":"You are not login"})
                 else:
-                    return Response ({"status":False,"message":"Invalid crediatials"},200)
+                    return Response ({"status":False,"message":"Invalid crediatials"})
             else:
-                return Response ({"status":False,"message":"Account doesnot access"},200)
+                return Response ({"status":False,"message":"Account doesnot access"})
 
 # ## EMPLOYEE LOGIN API
 
@@ -89,14 +89,14 @@ class employee_login(APIView):
                         data = {'uid':fetchAccount.uid,'name':fetchAccount.name,'email':fetchAccount.email,'contactno':fetchAccount.contactno,'designation':fetchAccount.designation,'stack':fetchAccount.stack,'role':fetchAccount.role }
                         JoinQuater(Accountid = fetchAccount).save()
                         
-                        return Response({"status":True,"message":"Login Successlly","token":access_token,"employeedata":data},200)
+                        return Response({"status":True,"message":"Login Successlly","token":access_token,"employeedata":data})
 
                     else:
                         return Response({"status":False,"message":"You are not login"})
                 else:
-                    return Response ({"status":False,"message":"Invalid crediatials"},200)
+                    return Response ({"status":False,"message":"Invalid crediatials"})
             else:
-                return Response ({"status":False,"message":"Account doesnot access"},200)
+                return Response ({"status":False,"message":"Account doesnot access"})
 
 class EmployeeAdd(APIView):
     def post (self, request):
@@ -232,7 +232,7 @@ class employeeCount(APIView):
         if my_token:
                 data = Account.objects.filter(role='employee').values('uid','name','email','contactno','designation','stack','role').count()
             
-                return Response({"status":True,"data":data},200)
+                return Response({"status":True,"data":data})
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
 
@@ -298,7 +298,7 @@ class quaters(APIView):
                 time = request.data.get ('time')
 
                 data = Quater(start_date = start_date, end_date = end_date, time= time)
-
+                
                 data.save()
 
                 return Response({"status":True,"message":"Quater Successfully Created"})
@@ -312,7 +312,7 @@ class quaters(APIView):
         if my_token:
             data = Quater.objects.all().values('uid','start_date','end_date','time').order_by('-uid')
             
-            return Response({"status":True,"data":data},200)
+            return Response({"status":True,"data":data})
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
 
@@ -414,7 +414,7 @@ class questions(APIView):
         if my_token:
             data = Question.objects.all().values('uid','question','type','questiontype').order_by('-uid')
             
-            return Response({"status":True,"data":data},200)
+            return Response({"status":True,"data":data})
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
 
@@ -496,7 +496,7 @@ class answers(APIView):
         if my_token:
             data = Answer.objects.all().values('uid','answer','Qid').order_by('-uid')
             
-            return Response({"status":True,"data":data},200)
+            return Response({"status":True,"data":data})
         else:
             return Response({"status":False,"message":'Unauthenticated'}),
 
